@@ -37,14 +37,12 @@ clean-targets:         # directories to be removed by `dbt clean`
 
 models:
   klausapp:
-    # Applies to all files under models/example/
-    example:
-      +materialized: table
+    # Applies to all files under models/staging/
     staging:
       schema: stg
       +materialized: view
 
 seeds:
   klausapp:
-    schema: stg
+    schema: raw
 
