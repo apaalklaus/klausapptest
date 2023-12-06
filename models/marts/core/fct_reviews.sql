@@ -1,11 +1,5 @@
 with
 
-conversations as (
-
-    select * from {{ ref('stg_klaus__conversations' ) }}
-
-),
-
 autoqa_reviews as  (
 
     select * from {{ ref('stg_klaus__autoqa_reviews' ) }}
