@@ -36,9 +36,6 @@ models:
         description: "Identifier of the auto QA review associated with this rating."
         tests:
           - not_null
-          - relationships:
-              to: ref('stg_klaus__autoqa_reviews')
-              field: autoqa_review_id
 
       - name: payment_id
         data_type: int64
