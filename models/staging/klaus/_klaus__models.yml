@@ -1,0 +1,333 @@
+version: 2
+
+models:
+  - name: stg_klaus__autoqa_root_causes
+    description: "Staging model for root causes identified in auto QA reviews."
+    columns:
+      - name: autoqa_rating_id
+        data_type: string
+        description: "Foreign key for the auto QA rating associated with the root cause."
+        tests:
+          - not_null
+      - name: category_name
+        data_type: string
+        description: "Category identifier for the root cause."
+      - name: root_cause_name
+        data_type: string
+        description: "Name or description of the root cause."
+      - name: root_cause_count
+        data_type: int64
+        description: "Count of occurrences for this root cause."
+      - name: is_unique_row
+        data_type: boolean
+        description: "Flag to indicate if this row represents a unique root cause."
+
+  - name: stg_klaus__autoqa_ratings
+    description: "Staging model for auto QA ratings for conversations."
+    columns:
+      - name: autoqa_rating_id
+        data_type: string
+        description: "Unique identifier for each auto QA rating."
+        tests:
+          - not_null
+          - unique
+      - name: autoqa_review_id
+        data_type: string
+        description: "Identifier of the auto QA review associated with this rating."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_klaus__autoqa_reviews')
+              field: autoqa_review_id
+
+      - name: payment_id
+        data_type: int64
+        description: "Payment ID related to the conversation being rated."
+        tests:
+          - not_null
+
+      - name: team_id
+        data_type: int64
+        description: "Identifier of the team responsible for the conversation."
+        tests:
+          - not_null
+
+      - name: payment_token_id
+        data_type: int64
+        description: "Token ID associated with the payment."
+        tests:
+          - not_null
+
+      - name: external_ticket_id
+        data_type: int64
+        description: "External ticket ID corresponding to the conversation."
+      - name: rating_category_id
+        data_type: int64
+        description: "Category ID for the rating."
+      - name: reviewee_user_id
+        data_type: int64
+        description: "Internal ID of the reviewee."
+      - name: rating_category_name
+        data_type: string
+        description: "Name of the rating category."
+      - name: score_pct
+        data_type: int64
+        description: "Numerical score of the rating. Represents the selected rating scale score vs maximum rating scale score. "
+        tests:
+          - range_check:
+              column_name: score_pct
+              lower_bound: 0
+              upper_bound: 100
+
+      - name: rating_scale_score
+        data_type: int64
+        description: |
+          ### AutoQA Categories
+          There are six categories that will get an automatic scoring in Klaus:
+
+          - **Greeting**: fixed binary scale 👍 👎
+          - **Grammar**: fixed 5-point scale
+          - **Empathy**: fixed binary scale 👍 👎
+          - **Closing**: binary scale 👍 👎
+          - **Tone**: fixed 5-point scale
+          - **Solution**: binary scale 👍 👎
+          - **Readability**: fixed 3-point scale
+
+          #### How do the AutoQA categories work?
+          - **Greeting**: Answers the question “Did the agent greet the customer?”
+          - **Closing**: Assesses the conversation answering question: "Did the agent close the conversation, take into consideration that offering further help and thanking the customer is a good closing message?"
+          - **Empathy**: Assesses the conversation answering question “Was the Agent empathetic towards the customer and their problems?"
+          - **Tone**: Recognizes the following 27 tones and calculates a score in 5 point scale based on that. Each tone has different weight, e.g. joyful 2.9 and frustrated -3. A conversation can have multiple different tones, each found tone has different positive or negative weights that are aggregated together. Tones include: accusatory, worried, curious, surprised, formal, confident, appreciative, concerned, sad, informal, regretful, encouraging, egocentric, joyful, optimistic, excited, polite, professional, frustrated, angry, disgusted, fun, friendly, supportive, polite, professional, apologetic.
+          - **Solution**: Identifies whether or not a solution was proposed in the conversation. 👍 if the agent offer a solution to the customer. If not then 👎 And if not sure "N/A".
+          - **Spelling & Grammar**: Detects all kinds of grammar mistakes which are grouped into 3 groups: grammar mistakes, misspelling mistakes and style mistakes.
+          - **Readability**: Analyzes and evaluates how easily a text can be understood, considering word complexity and sentence length.
+        tests:
+          - accepted_values:
+              values: [0, 1, 2, 3, 4, 42]  # Assuming 0-4 are valid ratings and 42 or NULL is 'N/A'
+              quote: false
+
+  - name: stg_klaus__conversations
+    description: "Staging model for conversation details in customer support."
+    columns:
+      - name: conversation_id
+        description: "Generated surrogate key using payment_id, payment_token_id, external_ticket_id, updated_at"
+        tests:
+          - unique
+          - not_null
+
+      - name: payment_id
+        data_type: int64
+        description: "Unique identifier for the payment related to the conversation."
+      - name: payment_token_id
+        data_type: int64
+        description: "Token ID associated with the payment."
+      - name: external_ticket_id
+        data_type: int64
+        description: "External ticket ID for the conversation."
+      - name: assignee_user_id
+        data_type: int64
+        description: "ID of the user assigned to the conversation."
+      - name: most_active_internal_user_id
+        data_type: int64
+        description: "ID of the most active internal user in the conversation."
+      - name: most_public_messages_agent_id
+        data_type: int64
+        description: "ID of the agent with the most public messages in the conversation."
+      - name: channel
+        data_type: string
+        description: "Communication channel used for the conversation."
+      - name: language_short
+        data_type: string
+        description: "2 letter ISO 639-1 code for the language used in the conversation."
+      - name: klaus_sentiment_name
+        data_type: string
+        description: "Name of the sentiment identified in the conversation by Klaus."
+      - name: is_closed
+        data_type: boolean
+        description: "Flag indicating whether the conversation is closed."
+      - name: is_klaus_sentiment_positive
+        data_type: boolean
+        description: "Flag indicating whether Klaus identified the sentiment as positive."
+      - name: is_deleted
+        data_type: boolean
+        description: "Flag indicating whether the conversation has been deleted."
+      - name: message_count
+        data_type: int64
+        description: "Total number of messages in the conversation."
+      - name: unique_public_agent_count
+        data_type: int64
+        description: "Count of unique public agents involved in the conversation."
+      - name: public_mean_character_count
+        data_type: float64
+        description: "Average character count of public messages."
+      - name: public_mean_word_count
+        data_type: float64
+        description: "Average word count of public messages."
+      - name: private_message_count
+        data_type: int64
+        description: "Count of private messages in the conversation."
+      - name: public_message_count
+        data_type: int64
+        description: "Count of public messages in the conversation."
+      - name: first_response_time_seconds
+        data_type: int64
+        description: "Time in seconds for the first response in the conversation."
+      - name: first_resolution_time_seconds
+        data_type: int64
+        description: "Time in seconds to first resolution in the conversation."
+      - name: full_resolution_time_seconds
+        data_type: int64
+        description: "Total time in seconds for full resolution of the conversation."
+      - name: conversation_created_at_date
+        data_type: date
+        description: "Date when the conversation was created."
+      - name: conversation_created_at
+        data_type: timestamp
+        description: "Timestamp when the conversation was created."
+      - name: updated_at
+        data_type: timestamp
+        description: "Timestamp of the last update to the conversation."
+      - name: deleted_at
+        data_type: timestamp
+        description: "Timestamp when the conversation was deleted, if applicable."
+      - name: closed_at
+        data_type: timestamp
+        description: "Timestamp when the conversation was closed."
+      - name: imported_at
+        data_type: timestamp
+        description: "Timestamp when the conversation data was imported."
+      - name: last_reply_at
+        data_type: timestamp
+        description: "Timestamp of the last reply in the conversation."
+
+  - name: stg_klaus__manual_ratings
+    description: "Staging model for manual ratings applied to conversations, reflecting the quality and outcomes assessed by human reviewers."
+    columns:
+      - name: payment_id
+        data_type: int64
+        description: "Unique identifier for the payment related to the conversation being rated."
+      - name: team_id
+        data_type: int64
+        description: "Identifier for the team responsible for the conversation."
+      - name: review_id
+        data_type: int64
+        description: "Unique identifier for the review associated with the rating."
+      - name: category_id
+        data_type: int64
+        description: "Identifier for the category of the rating."
+      - name: is_critical_rating
+        data_type: boolean
+        description: "Boolean flag indicating if it's a critical rating category. When an agent fails a critical category, all categories in that review fail automatically."
+      - name: category_name
+        data_type: string
+        description: "Name of the category for the rating."
+      - name: cause_name
+        data_type: string
+        description: "Name of the cause or reason for the rating assigned."
+      - name: rating_weight
+        data_type: float64
+        description: "Weight assigned to the rating, indicating its significance. If reviewer selects n/a from the UI, then weight is marked as 0."
+      - name: rating_scale_score
+        data_type: int64
+        description: "The numerical rating value selected by the reviewer. Values range from 0 to 4. Value 42 or null represents reviewer choosing to ignore it from score calculations."
+      - name: max_rating_scale_score
+        data_type: int64
+        description: "The maximum possible value for the rating. Values range from 0 to 4."
+
+  - name: stg_klaus__autoqa_reviews
+    description: "Staging model for automated quality assurance reviews of conversations, focusing on consistency and adherence to standards."
+    columns:
+      - name: autoqa_review_id
+        data_type: string
+        description: "Unique identifier for the auto QA review record."
+      - name: payment_id
+        data_type: int64
+        description: "Payment identifier associated with the conversation under review."
+      - name: payment_token_id
+        data_type: int64
+        description: "Token ID associated with the payment in the reviewed conversation."
+      - name: external_ticket_id
+        data_type: int64
+        description: "External ticket ID linked to the conversation under review."
+      - name: reviewee_user_id
+        data_type: int64
+        description: "Internal ID of the reviewee involved in the conversation."
+      - name: team_id
+        data_type: int64
+        description: "Team ID responsible for the conversation under review."
+      - name: conversation_created_date
+        data_type: date
+        description: "Date when the conversation being reviewed was created."
+      - name: created_at
+        data_type: timestamp
+        description: "Timestamp marking when the auto QA review was created."
+      - name: updated_at
+        data_type: timestamp
+        description: "Timestamp of the last update made to the auto QA review record."
+
+  - name: stg_klaus__manual_reviews
+    description: "Staging model for manual reviews of conversations, evaluating performance and providing feedback for improvement."
+    columns:
+      - name: review_id
+        data_type: int64
+        description: "Unique identifier for the manual review."
+      - name: payment_id
+        data_type: int64
+        description: "Payment ID associated with the conversation under review."
+      - name: payment_token_id
+        data_type: int64
+        description: "Token ID for the payment in the conversation under review."
+      - name: team_id
+        data_type: int64
+        description: "Team ID of the group responsible for the conversation."
+      - name: reviewer_user_id
+        data_type: int64
+        description: "Internal ID of the user who conducted the review."
+      - name: reviewee_user_id
+        data_type: int64
+        description: "Internal ID of the user being reviewed."
+      - name: conversation_external_id
+        data_type: int64
+        description: "External ID of the conversation under review."
+      - name: updated_by_user_id
+        data_type: int64
+        description: "ID of the user who last updated the review."
+      - name: comment_id
+        data_type: int64
+        description: "ID of the comment associated with the review."
+      - name: scorecard_id
+        data_type: int64
+        description: "ID of the scorecard used in the review."
+      - name: scorecard_tag
+        data_type: string
+        description: "Tag or identifier of the scorecard used."
+      - name: score
+        data_type: float64
+        description: "Score assigned in the review."
+      - name: is_assignment_review
+        data_type: boolean
+        description: "Boolean indicating if the review is part of an assignment."
+      - name: is_seen
+        data_type: boolean
+        description: "Boolean flag indicating if the review has been seen by the reviewee."
+      - name: is_disputed
+        data_type: boolean
+        description: "Boolean flag indicating if the review has been disputed."
+      - name: review_time_seconds
+        data_type: int64
+        description: "Time taken for the review, measured in seconds."
+      - name: conversation_created_date
+        data_type: date
+        description: "Date when the conversation under review was created."
+      - name: created_at
+        data_type: timestamp
+        description: "Timestamp marking the creation of the manual review."
+      - name: conversation_created_at
+        data_type: timestamp
+        description: "Timestamp when the conversation under review was initiated."
+      - name: updated_at
+        data_type: timestamp
+        description: "Timestamp of the last update to the manual review record."
+      - name: imported_at
+        data_type: timestamp
+        description: "Timestamp marking when the review data was imported into the system."

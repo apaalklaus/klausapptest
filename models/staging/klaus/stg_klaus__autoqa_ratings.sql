@@ -17,17 +17,17 @@ renamed as (
         payment_token_id,
         external_ticket_id,
         rating_category_id,
-        reviewee_internal_id,
+        reviewee_internal_id as reviewee_user_id,
 
         -- strings
-        rating_category_name,
+        lower(rating_category_name) as rating_category_name,
 
         -- numbers
-        score,
+        score as score_pct,
         rating_scale_score
 
     from source
 
 )
 
-select * from renamed
+select * from renamed order by score_pct desc

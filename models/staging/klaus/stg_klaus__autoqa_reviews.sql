@@ -14,7 +14,7 @@ renamed as (
         payment_id,
         payment_token_id,
         external_ticket_id,     
-        reviewee_internal_id,
+        reviewee_internal_id as reviewee_user_id,
         team_id,
     
         --dates

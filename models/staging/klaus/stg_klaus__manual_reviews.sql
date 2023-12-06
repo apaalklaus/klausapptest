@@ -25,7 +25,7 @@ renamed as (
         scorecard_tag,
 
         -- numbers
-        score,
+        score as score_pct,
         
         -- boolean
         assignment_review as is_assignment_review,

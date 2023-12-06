@@ -1,0 +1,61 @@
+version: 2
+
+models:
+  - name: fct_reviews
+    description: "Unified table of reviews. Consolidates both autoqa and manual reviews, providing a comprehensive view of all review activities. Only reviews with scores."
+    columns:
+      - name: review_id
+        data_type: string
+        description: "Unique identifier for each review record."
+        tests:
+          - not_null
+          - unique
+
+      - name: review_type
+        data_type: string
+        description: "Type of review, distinguishing between 'autoqa' and 'manual'."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['autoqa', 'manual']
+              quote: true
+
+      - name: external_ticket_id
+        data_type: int64
+        description: "Identifier for the external ticket associated with the review."
+        tests:
+          - not_null
+
+      - name: reviewee_user_id
+        data_type: int64
+        description: "Internal user ID of the reviewee."
+        tests:
+          - not_null
+
+      - name: team_id
+        data_type: int64
+        description: "Identifier for the team responsible for the review."
+        tests:
+          - not_null
+
+      - name: review_created_at_date
+        data_type: date
+        description: "The date when the review was created."
+        tests:
+          - not_null
+
+      - name: score_pct
+        data_type: float64
+        description: "The percentage score assigned in the review. Represents the ratio of the selected score to the maximum possible score."
+        tests:
+          - not_null
+          - range_check:
+              column_name: score_pct
+              lower_bound: 0
+              upper_bound: 100
+
+      - name: is_review_passed
+        data_type: boolean
+        description: "Boolean flag indicating whether the review was passed or not."
+        tests:
+          - not_null

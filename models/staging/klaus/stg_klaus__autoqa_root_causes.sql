@@ -2,7 +2,7 @@ with
 
 source as (
 
-    select * from {{ source('klaus', 'autoqa_root_causes') }} 
+    select * from {{ source('klaus', 'autoqa_root_causes') }}
 
 ),
 
@@ -14,7 +14,7 @@ renamed as (
         autoqa_rating_id,
 
         -- strings
-        category as category_name,
+        cast(category as string) as category_name,
         root_cause as root_cause_name,
 
         -- numbers
@@ -30,4 +30,4 @@ identify_unique_rows as (
     from renamed
 )
 
-select * from identify_unique_rows where is_unique_row = true 
+select * from identify_unique_rows where is_unique_row = true and autoqa_rating_id is not null

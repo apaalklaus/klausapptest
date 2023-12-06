@@ -10,10 +10,11 @@ renamed as (
 
     select
         -- ids
+        {{ dbt_utils.generate_surrogate_key(['payment_id', 'payment_token_id', 'external_ticket_id', 'updated_at']) }} as conversation_id, 
         payment_id,
         payment_token_id,
         external_ticket_id,
-        assignee_id,
+        assignee_id as assignee_user_id,
         most_active_internal_user_id,
         agent_most_public_messages as most_public_messages_agent_id,
 
